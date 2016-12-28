@@ -206,28 +206,32 @@ NodeContainer.prototype.parseBoxShadows = function() {
   if(boxShadow && boxShadow !== 'none') {
     var shadows = boxShadow.split(this.SHADOW_PROPERTY);
     for(var i = 0; shadows && (i < shadows.length); i++) {
+      var result = {inset: false};
       var s = shadows[i].match(this.BOX_SHADOW_VALUES);
 
-      var ci = 0;
-      var insetEndTest = s[s.length - 1] === 'inset';
-      var isInset = s[0] === 'inset' || insetEndTest;
-
-      var color = new Color((!isInset || insetEndTest) ? s[ci] : s[s.length - 1]);
-
-      if(!isInset && (!color.isColor || isNaN(s[ci]))) {
-        ci = -1;
-        color = new Color(s[s.length - 1]);
+      for (var j = 0; s && j < s.length; j++) {
+        if (s[j] === 'inset') {
+          result.inset = true;
+        } else if (isNaN(s[j].replace('px', ''))) {
+          result.color = new Color(s[j]);
+        } else if (!result.hasOwnProperty('offsetX')) {
+          result.offsetX = parseFloat(s[j].replace('px', ''));
+        } else if (!result.hasOwnProperty('offsetY')) {
+          result.offsetY = parseFloat(s[j].replace('px', ''));
+        } else if (!result.hasOwnProperty('blur')) {
+          result.blur = parseFloat(s[j].replace('px', ''));
+        } else if (!result.hasOwnProperty('spread')) {
+          result.spread = parseFloat(s[j].replace('px', ''));
+        }
       }
 
-      var result = {
-        color: color,
-        offsetX: s[ci + 1] && s[ci + 1] !== 'inset' ? parseFloat(s[ci + 1]) : 0,
-        offsetY: s[ci + 2] && s[ci + 2] !== 'inset' ? parseFloat(s[ci + 2]) : 0,
-        blur: s[ci + 3] && s[ci + 3] !== 'inset' ? parseFloat(s[ci + 3]) : 0,
-        spread: (s[ci + 4] && s[ci + 4] !== 'inset') ? parseFloat(s[ci + 4]) : 0,
-        inset: isInset
-      };
-      
+      if (!result.hasOwnProperty('blur')) {
+        result.blur = 0;
+      }
+      if (!result.hasOwnProperty('spread')) {
+        result.spread = 0;
+      }
+
       results.push(result);
     }
   }
